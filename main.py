@@ -1,0 +1,167 @@
+import os
+from PIL import Image, ImageTk
+from tkinter import ttk
+from tkinter import Tk, Toplevel, Label, Button, Spinbox, Radiobutton, StringVar, IntVar, LEFT, S
+import random
+import string
+
+# window_before_exit
+window_before_exit = None
+
+def close_main_window():
+    global window_before_exit
+    if window_before_exit is not None and window_before_exit.winfo_exists():
+        return
+    
+    window_before_exit = Toplevel(main_window)
+    window_before_exit.title("Confirm exit")
+    window_before_exit.resizable(False,False)
+    window_before_exit.grab_set()
+    window_before_exit.transient(main_window)
+    window_before_exit.focus_set()
+    window_before_exit.protocol("WM_DELETE_WINDOW", lambda: None)
+    
+    def yes_exit():
+        global window_before_exit
+        main_window.destroy()
+        window_before_exit = None
+        print("closing app")
+        
+
+    def no_exit():
+        global window_before_exit
+        window_before_exit.destroy()
+        window_before_exit = None
+
+
+    #def on_hover(widget, hover_color, normal_color):
+    #    widget.config(bg=hover_color)
+    #    widget.bind("<Leave>", lambda x: widget.config(bg=normal_color))
+    
+    label = Label(window_before_exit, text="Are you sure you want to exit?")
+    label.grid(row=0, column=0, columnspan=2, padx=20, pady=10)
+
+    # button yes    
+    button_yes = Button(window_before_exit, text="Yes", bg="green", fg="black", relief="raised", borderwidth=3, width=10, command=yes_exit)
+    button_yes.grid(row=1, column=0, padx=10, pady=10)
+
+    # button no
+    button_no = Button(window_before_exit, text="No", bg="red", fg="black", relief="raised", borderwidth=3, width=10, command=no_exit)
+    button_no.grid(row=1, column=1, padx=10, pady=10)
+
+    # on_hover(button_yes, "lightgreen", "green")
+    # on_hover(button_no, "pink", "red")
+
+
+            
+# -- Main Window --
+
+main_window = Tk()
+
+main_window.title("Password-Generator 3000")
+main_window.geometry("400x300+450+200")
+main_window.resizable(True, True)
+main_window.minsize(300, 200)
+
+# icon = PhotoImage(file = "icon2.png")
+# window.iconphoto(False, icon)
+
+main_window.configure(bg="lightgray")
+
+
+
+# -- funcs --
+
+password_var = StringVar()
+
+
+def generate_password():
+    length = length_var.get()
+    difficulty = difficulty_var.get()
+
+    if difficulty == "easy":
+        chars = string.ascii_letters
+    elif difficulty == "medium":
+        chars = string.ascii_letters + string.digits
+    else:
+        chars = string.ascii_letters + string.digits + string.punctuation 
+
+    password = ''.join(random.choice(chars) for _ in range(length))
+    password_var.set(password)
+    
+    print("Generated password:", password)
+
+
+def write_generated_password_to_vault(password):
+    os.makedirs("saved_passwords", exist_ok=True)
+    vault = "saved_passwords/passwords.txt"
+    with open(vault, "a") as passwd_file:
+        passwd_file.write(password + "\n")
+        
+
+def save_generated_password():
+    password = password_var.get()
+    if password:
+        write_generated_password_to_vault(password)
+        print("Password saved to file")
+    else:
+        print("No password generated yet")
+    
+
+def copy_generated_password():
+    pass
+
+
+
+# -- Widgets --
+
+
+label = Label(text="Сгенерируй пароль!")
+label.pack()
+
+# choice lentgh password
+length_var = IntVar(value=12)  # дефолтная длина
+Spinbox(main_window, from_=4, to=20, textvariable=length_var).pack()
+
+# choice difficult password 
+difficulty_var = StringVar(value="easy")  # easy, medium, hard
+
+Radiobutton(main_window, text="Easy", variable=difficulty_var, value="easy").pack()
+Radiobutton(main_window, text="Medium", variable=difficulty_var, value="medium").pack()
+Radiobutton(main_window, text="Hard", variable=difficulty_var, value="hard").pack()
+
+
+# generate password
+button_generetion_password = ttk.Button()
+button_generetion_password.pack(padx=20)
+button_generetion_password.config(text="Сгенерировать пароль", command=generate_password)
+
+img = Image.open("icons/save_button.png")
+img = img.resize((28, 28), Image.LANCZOS)   # ставь любой размер
+
+save_icon = ImageTk.PhotoImage(img)
+# save password
+save_generetion_password = ttk.Button()
+save_generetion_password.config(image=save_icon, command=save_generated_password)
+save_generetion_password.image = save_icon
+save_generetion_password.pack(padx=20)
+# copy password
+#button_copy_password = ttk.Button()
+#button_copy_password.pack()
+#button_copy_password.config(text="empty",  command=copy_generated_password)
+
+
+
+# ---------------------
+
+
+main_window.update_idletasks()
+
+main_window.protocol("WM_DELETE_WINDOW", close_main_window)
+
+
+
+main_window.mainloop()
+
+
+
