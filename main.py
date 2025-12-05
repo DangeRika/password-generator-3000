@@ -2,11 +2,22 @@ import os
 from PIL import Image, ImageTk
 from tkinter import ttk
 from tkinter import Tk, Toplevel, Label, Button, Entry, END, Spinbox, Radiobutton, StringVar, IntVar, LEFT, S
+from tkinter import Text, Scrollbar, RIGHT, Y, BOTH
 import random
 import string
 from datetime import datetime
 import sys
 
+
+
+"""
+need tree things
+
+1. add buttons for copy password and button for open passwords list
+2. fix input length password
+3. built beutiful frontend 
+
+"""
 
 
 # -- Additional windows --
@@ -70,6 +81,7 @@ def add_description_for_password(password):
     window_before_save_password.title("Add Description")
     window_before_save_password.geometry("400x150")
 
+    
     # Label
     description_label = Label(window_before_save_password, text="Add a description (max 15 characters):")
     description_label.pack(padx=10, pady=10)
@@ -103,13 +115,53 @@ def add_description_for_password(password):
     save_description_button = Button(window_before_save_password, text="Save Description", command=save_description_and_password)
     save_description_button.pack(padx=10, pady=10)
 
+
+
+    def cancel_add_description():
+        print("password was not saved")
+        window_before_save_password.destroy()
+
+    window_before_save_password.protocol("WM_DELETE_WINDOW", cancel_add_description)
+
+
+
+window_for_passwords_list = None
+
+def open_window_for_passwords_list():
+    global window_for_passwords_list
+    if window_for_passwords_list is not None and window_for_passwords_list.winfo_exists():
+        return
+        
+    window_for_passwords_list = Toplevel(main_window) 
+    window_for_passwords_list.title("My passwords")
+    window_for_passwords_list.geometry("450x450")
+
+    text_area = Text(window_for_passwords_list, wrap="none", font=("Arial", 11))
+    text_area.pack(expand=True, fill=BOTH)
+
+    scrollbar = Scrollbar(window_for_passwords_list, command=text_area.yview)
+    scrollbar.pack(side=RIGHT, fill=Y)
+    text_area.config(yscrollcommand=scrollbar.set)
+
+    vault = "saved_passwords/passwords.txt"
+
+    if os.path.exists(vault):
+        with open(vault, 'r') as file:
+            content = file.read()
+            if content.strip() == "":
+                text_area.insert("1.0", "File is empty")
+            else:
+                text_area.insert("1.0", content)
+    else:
+        text_area.insert("1.0", "File passwords.txt not found")
+
                 
 # -- Main Window --
 
 main_window = Tk()
 
 main_window.title("Password-Generator 3000")
-main_window.geometry("400x300+450+200")
+main_window.geometry("500x400+450+200")
 main_window.resizable(True, True)
 main_window.minsize(300, 200)
 
@@ -134,7 +186,7 @@ def generate_password():
     elif difficulty == "medium":
         chars = string.ascii_letters + string.digits
     else:
-        chars = string.ascii_letters + string.digits + "!@?#$%^&*" 
+        chars = string.ascii_letters + string.digits + "!@_?#$%^&*" 
 
     password = ''.join(random.choice(chars) for _ in range(length))
     password_var.set(password)
@@ -155,14 +207,16 @@ def write_generated_password_to_vault(password, description):
     
     with open(vault, "a") as passwd_file:
         passwd_file.write(f"{date_and_time} | {password} | {description}\n") # тут запись в файл
-        # добавить что такое datetime и description
-        
+
+    print("Password was saved success")
+
+
 
 def save_generated_password():
     password = password_var.get()
     if password:
-        add_description_for_password(password)
         print("Password ready to be saved, waiting for description...")
+        add_description_for_password(password)
     else:
         print("No password generated yet")
 
@@ -172,7 +226,16 @@ def copy_generated_password():
     pass
 
 
+
+def open_passwords_list():
+    open_window_for_passwords_list()
+
+
+
 # -- Widgets --
+
+
+# add frame for all widgets!!
 
 
 label = Label(text="Сгенерируй пароль!")
@@ -186,9 +249,6 @@ length_label = Label(main_window, text="Введите длину пароля:"
 # choice lentgh password
 length_var = IntVar(value=12)
 Spinbox(main_window, from_=4, to=20, textvariable=length_var, validate='key').pack()
-
-
-
 
 
 # choice difficult password 
@@ -210,7 +270,7 @@ password_entry.pack(pady=10)
 
 
 
-
+# image for save button
 img = Image.open("icons/save_button.png")
 img = img.resize((28, 28), Image.LANCZOS)   # ставь любой размер
 
@@ -221,11 +281,29 @@ save_generetion_password.config(image=save_icon, command=save_generated_password
 save_generetion_password.image = save_icon
 save_generetion_password.pack(padx=20)
 
-# copy password
-#button_copy_password = ttk.Button()
-#button_copy_password.pack()
-#button_copy_password.config(text="empty",  command=copy_generated_password)
 
+# image for copy button
+img = Image.open("icons/copy_button.png")
+img = img.resize((28, 28), Image.LANCZOS)
+
+copy_icon = ImageTk.PhotoImage(img)
+# copy password
+button_copy_password = ttk.Button()
+button_copy_password.config(image=copy_icon, command=copy_generated_password)
+button_copy_password.image = copy_icon
+button_copy_password.pack(padx=20)
+
+
+# image for copy button
+img = Image.open("icons/passwords_list_button.png")
+img = img.resize((28, 28), Image.LANCZOS)
+
+passwords_list_icon = ImageTk.PhotoImage(img)
+# open passwords list
+button_open_passwords_list = ttk.Button()
+button_open_passwords_list.config(image=passwords_list_icon, command=open_passwords_list)
+button_open_passwords_list.image = passwords_list_icon
+button_open_passwords_list.pack(padx=20)
 
 
 # ---------------------
