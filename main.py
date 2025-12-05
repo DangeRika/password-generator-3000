@@ -1,7 +1,10 @@
 import os
 from PIL import Image, ImageTk
 from tkinter import ttk
-from tkinter import Tk, Toplevel, Label, Button, Entry, END, Spinbox, Radiobutton, StringVar, IntVar, LEFT, S
+from tkinter import ( Tk, Toplevel, Label, Button, Entry, END, Spinbox, 
+                      Radiobutton, StringVar, IntVar, LEFT, S
+                    )
+                    
 from tkinter import Text, Scrollbar, RIGHT, Y, BOTH
 import random
 import string
