@@ -6,6 +6,7 @@ from tkinter import ( Tk, Toplevel, Label, Button, Entry, END, Spinbox,
                     )
                     
 from tkinter import Text, Scrollbar, RIGHT, Y, BOTH
+from tkinter.messagebox import showerror, showwarning, showinfo
 import random
 import string
 from datetime import datetime
@@ -14,13 +15,28 @@ import sys
 
 
 """
-need tree things
+need three things
 
-1. add buttons for copy password and button for open passwords list
-2. fix input length password
-3. built beutiful frontend 
+1. make beutiful frontend 
+2. make beutiful passwords list and add functionality there
 
+
+done---------
+- (fix input length password) Х
+- (add mesages errors on screen) X
+- (add buttons for copy password) Х
+------------------
 """
+
+
+
+
+# -- Errors -- 
+
+
+def open_length_error(): 
+    showerror(title="Ошибка", message="Длина пароля должна быть от 4 до 20 символов")
+
 
 
 # -- Additional windows --
@@ -103,7 +119,7 @@ def add_description_for_password(password):
         len_input_chars = len(description_var.get())
         char_count_label.config(text=f"Characters: {len_input_chars}/15")        
         if len_input_chars > 15:
-            description_var.set(description_var.get()[:15])  # Limit to 100 chars
+            description_var.set(description_var.get()[:15])  # Limit to 15 chars
             char_count_label.config(text="Characters: 15/15")
 
     description_var.trace_add("write", counter_characters)
@@ -115,7 +131,7 @@ def add_description_for_password(password):
             write_generated_password_to_vault(password, description)  # Save the password with description
             window_before_save_password.destroy()
 
-    save_description_button = Button(window_before_save_password, text="Save Description", command=save_description_and_password)
+    save_description_button = Button(window_before_save_password, text="Save", command=save_description_and_password)
     save_description_button.pack(padx=10, pady=10)
 
 
@@ -164,7 +180,7 @@ def open_window_for_passwords_list():
 main_window = Tk()
 
 main_window.title("Password-Generator 3000")
-main_window.geometry("500x400+450+200")
+main_window.geometry("500x400+430+150")
 main_window.resizable(True, True)
 main_window.minsize(300, 200)
 
@@ -177,10 +193,24 @@ main_window.configure(bg="lightgray")
 
 # -- funcs --
 
+
+
 password_var = StringVar()
 
 
+def is_correct_length(lenth_var):
+    length = length_var.get()
+    if length < 4 or length > 20:
+        open_length_error()
+        print("Длина пароля должна быть от 4 до 20 символов")
+        return False
+    return True
+
+
 def generate_password():
+    if not is_correct_length(length_var):
+        return  # если длина пароля некорректна, не генерируем пароль
+        
     length = length_var.get()
     difficulty = difficulty_var.get()
 
@@ -189,7 +219,7 @@ def generate_password():
     elif difficulty == "medium":
         chars = string.ascii_letters + string.digits
     else:
-        chars = string.ascii_letters + string.digits + "!@_?#$%^&*" 
+        chars = string.ascii_letters + string.digits + "!@_?#$<>%^&*" 
 
     password = ''.join(random.choice(chars) for _ in range(length))
     password_var.set(password)
@@ -226,12 +256,31 @@ def save_generated_password():
     
 
 def copy_generated_password():
-    pass
+    password = password_entry.get()
+    if password == "":
+        showwarning(title="Внимание", message="Пароль не может быть пустым")
+        print("password is empty")
+    else:
+        main_window.clipboard_clear()
+        main_window.clipboard_append(password)
+        print("password was copy in clipboard")
 
 
 
 def open_passwords_list():
     open_window_for_passwords_list()
+
+
+def show_password():
+    if password_entry.cget("show") == "*":
+        password_entry.config(show="")
+        eye_button.config(image=eye_open_img)
+        eye_button.image = eye_open_img
+    else:
+        password_entry.config(show="*")
+        eye_button.config(image=eye_close_img)
+        eye_button.image = eye_close_img
+        
 
 
 
@@ -251,7 +300,8 @@ length_label = Label(main_window, text="Введите длину пароля:"
 
 # choice lentgh password
 length_var = IntVar(value=12)
-Spinbox(main_window, from_=4, to=20, textvariable=length_var, validate='key').pack()
+length_spinbox = Spinbox(main_window, from_=4, to=20, textvariable=length_var)
+length_spinbox.pack()
 
 
 # choice difficult password 
@@ -268,10 +318,27 @@ button_generetion_password.pack(padx=20)
 button_generetion_password.config(text="Сгенерировать пароль", command=generate_password)
 
 
-password_entry = Entry(main_window, font=("Arial", 14), width=25)
-password_entry.pack(pady=10)
+
+password_entry = Entry(main_window, font=("Arial", 14), width=25, show="*")
+password_entry.pack(anchor="c", pady=10)
 
 
+eye_open_img_pil = Image.open("icons/eye_open.png")  # Открытое изображение
+eye_close_img_pil = Image.open("icons/eye_close.png")  # Закрытое изображение
+
+eye_open_img_pil = eye_open_img_pil.resize((28, 28), Image.LANCZOS)
+eye_close_img_pil = eye_close_img_pil.resize((28, 28), Image.LANCZOS)
+
+eye_open_img = ImageTk.PhotoImage(eye_open_img_pil)
+eye_close_img = ImageTk.PhotoImage(eye_close_img_pil)
+
+# Создаем кнопку для переключения видимости пароля
+eye_button = ttk.Button()
+eye_button.config(image=eye_close_img, command=show_password)
+eye_button.image = eye_close_img
+eye_button.pack(padx=20)
+
+ 
 
 # image for save button
 img = Image.open("icons/save_button.png")
